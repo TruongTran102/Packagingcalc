@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính GSM, Khối Lượng, Đường Kính & Chiều Dài Cuộn Màng Ghép</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Ẩn hoàn toàn nút mũi tên tăng giảm mặc định trong ô number để không che chữ số */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .layer-pattern-metal {
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.25),
+                rgba(255, 255, 255, 0.25) 8px,
+                transparent 8px,
+                transparent 16px
+            );
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Top Header Navigation -->
+    <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-inner shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">FlexPack Calc Pro</h1>
+                        <span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">Màng Ghép Đa Lớp</span>
+                    </div>
+                    <p class="text-xs text-slate-400 truncate">Công cụ tính Định lượng (GSM), Khối lượng, Đường kính & Chiều dài cuộn màng</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap items-center gap-2 no-print">
+                <button type="button" onclick="toggleReferenceModal(true)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                    <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Bảng Tỷ Trọng Chuẩn</span>
+                </button>
+                <button type="button" onclick="copySummaryReport()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                    <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                    </svg>
+                    <span>Sao chép báo cáo</span>
+                </button>
+                <button type="button" onclick="exportCSV()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    <span>Xuất file CSV</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 flex-1">
+
+        <!-- Quick Presets Bar -->
+        <div class="bg-white rounded-xl p-3.5 mb-5 shadow-sm border border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5 no-print">
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <span>Nạp nhanh cấu trúc mẫu:</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+                <button type="button" onclick="loadPreset('IMAGE_SAMPLE')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition">
+                    ★ Mẫu ALU 9 / WHITE-LLDPE 191 (GSM: 200.11)
+                </button>
+                <button type="button" onclick="loadPreset('PET_ALU_LLDPE')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
+                    PET 12 / ALU 7 / LLDPE 70
+                </button>
+                <button type="button" onclick="loadPreset('BOPP_MPET_CPP')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
+                    BOPP 20 / MPET 12 / CPP 40
+                </button>
+                <button type="button" onclick="loadPreset('MATOPP_MPET_PE')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
+                    Matt-OPP 20 / MPET 12 / PE 70
+                </button>
+                <button type="button" onclick="loadPreset('PET_NYLON_ALU_CPP')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 transition">
+                    PET 12 / Nylon 15 / ALU 9 / CPP 70
+                </button>
+            </div>
+        </div>
+
+        <!-- Primary Grid Layout (Stacks cleanly on narrow split-screen windows, 12-col on xl screens) -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT COLUMN: Layer Builder & Roll Dimension Calculator (8 cols on XL) -->
+            <div class="xl:col-span-8 space-y-6 min-w-0">
+
+                <!-- 1. Multi-layer Table Card -->
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="px-4 sm:px-5 py-4 bg-slate-50/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0">1</span>
+                                <h2 class="text-sm sm:text-base font-bold text-slate-900">Cấu trúc các lớp màng ghép (Thickness & Density)</h2>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1 sm:ml-8">
+                                Chọn từ <strong>28 loại vật liệu chuẩn</strong> để tự động điền <strong>Density</strong> (vẫn có thể chỉnh sửa trực tiếp).
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-2 bg-slate-900 text-white px-3 py-1.5 rounded-xl border border-slate-700 max-w-full">
+                            <span class="text-[11px] text-slate-400 font-medium shrink-0">Cấu trúc:</span>
+                            <span id="structureBadgeText" class="text-xs font-mono font-bold text-blue-300 truncate">ALU 9 / WHITE-LLDPE 191</span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Layer Builder Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[720px] text-left border-collapse">
+                            <thead>
+                                <tr class="bg-orange-100/80 text-slate-700 text-[11px] font-bold border-b border-slate-200">
+                                    <th class="py-3 pl-4 pr-2 w-12 text-center align-middle">LỚP</th>
+                                    <th class="py-3 px-2 min-w-[220px] align-middle">FILM (CHỌN TRONG 28 VẬT LIỆU)</th>
+                                    <th class="py-3 px-2 w-40 min-w-[155px] align-middle">
+                                        <div>DENSITY (TỶ TRỌNG)</div>
+                                        <div class="text-[10px] font-mono text-slate-500 font-normal mt-0.5">g/cm³ (Điền sẵn, sửa được)</div>
+                                    </th>
+                                    <th class="py-3 px-2 w-36 min-w-[135px] align-middle">
+                                        <div>THICKNESS (ĐỘ DÀY)</div>
+                                        <div class="text-[10px] font-mono text-slate-500 font-normal mt-0.5">Micromet (µm)</div>
+                                    </th>
+                                    <th class="py-3 px-3 w-36 min-w-[130px] text-right align-middle">
+                                        <div>D × T (GSM LỚP)</div>
+                                        <div class="text-[10px] font-mono text-slate-500 font-normal mt-0.5">= Density × µm (g/m²)</div>
+                                    </th>
+                                    <th class="py-3 px-2 w-24 text-right align-middle hidden md:table-cell">TỶ LỆ GSM</th>
+                                    <th class="py-3 pl-2 pr-4 w-28 text-center align-middle no-print">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody id="layersTableBody" class="divide-y divide-slate-200 text-sm">
+                                <!-- Injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Add Layer & Optional Extra GSM Row -->
+                    <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2 no-print">
+                            <button type="button" onclick="addLayer()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <span>Thêm lớp màng</span>
+                            </button>
+                            <button type="button" onclick="addSpecificMaterialLayer('INK')" class="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition">
+                                <span>+ Lớp INK (1.00)</span>
+                            </button>
+                            <button type="button" onclick="addSpecificMaterialLayer('Adhesive')" class="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition">
+                                <span>+ Lớp Adhesive (1.00)</span>
+                            </button>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-3 bg-amber-50/80 border border-amber-200/80 px-3 py-2 rounded-xl w-full sm:w-auto">
+                            <div class="text-xs">
+                                <label for="extraGsmInput" class="font-semibold text-amber-900 block">GSM cộng thêm ngoài bảng:</label>
+                                <span class="text-[11px] text-amber-700">Keo khô / Mực in (Mặc định: 0)</span>
+                            </div>
+                            <div class="flex items-stretch w-32 bg-white border border-amber-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-amber-500 shrink-0">
+                                <input
+                                    id="extraGsmInput"
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    value="0"
+                                    oninput="recalculateAll()"
+                                    class="w-full min-w-0 px-2.5 py-1.5 text-right font-mono text-sm font-bold text-amber-900 bg-transparent outline-none"
+                                >
+                                <span class="px-2 bg-amber-100/70 text-[11px] font-mono text-amber-800 flex items-center border-l border-amber-200 shrink-0">g/m²</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Footer Row of Layer Table -->
+                    <div class="px-4 sm:px-5 py-3.5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex flex-wrap items-center gap-4 sm:gap-6">
+                            <div>
+                                <span class="text-xs text-slate-400 block">Số lớp đang tính:</span>
+                                <span id="summaryLayerCount" class="text-sm font-bold font-mono text-white">2 lớp</span>
+                            </div>
+                            <div class="h-7 w-px bg-slate-700 hidden sm:block"></div>
+                            <div>
+                                <span class="text-xs text-slate-400 block">Tổng độ dày (Total Thickness):</span>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span id="summaryTotalThickness" class="text-base font-extrabold font-mono text-sky-400">200.0</span>
+                                    <span class="text-xs font-mono text-slate-300">µm</span>
+                                    <span id="summaryTotalThicknessMm" class="text-xs font-mono text-slate-400">(0.200 mm)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 bg-slate-800/90 px-4 py-2 rounded-xl border border-slate-700 w-full sm:w-auto justify-between sm:justify-end">
+                            <div>
+                                <span class="text-xs text-slate-300 block">Tổng Định Lượng Màng (Total GSM):</span>
+                                <span class="text-[11px] text-slate-400 font-mono">Tổng D × T các lớp</span>
+                            </div>
+                            <div class="text-right pl-3 border-l border-slate-700">
+                                <span id="summaryTotalGsm" class="text-xl sm:text-2xl font-extrabold font-mono text-emerald-400">200.11</span>
+                                <span class="text-xs font-mono text-emerald-300 ml-1">g/m²</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Roll Dimensions, Outer Diameter (OD) & Roll Length (L) Two-Way Calculator -->
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="px-4 sm:px-5 py-4 bg-slate-50/70 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                        <div class="flex items-start gap-2.5">
+                            <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                            <div>
+                                <h2 class="text-sm sm:text-base font-bold text-slate-900">Kích thước cuộn, Đường kính cuộn (OD) & Chiều dài cuộn (L)</h2>
+                                <p class="text-xs text-slate-500 mt-0.5">Hỗ trợ tính 2 chiều: Từ Chiều dài ➔ Đường kính cuộn hoặc Từ Đường kính cuộn ➔ Chiều dài cuộn</p>
+                            </div>
+                        </div>
+
+                        <!-- Two-way Mode Switcher -->
+                        <div class="inline-flex flex-wrap sm:flex-nowrap p-1 rounded-xl bg-slate-200/80 border border-slate-300/80 text-xs font-semibold shrink-0 no-print">
+                            <button
+                                type="button"
+                                id="modeBtnLengthToOd"
+                                onclick="setRollCalcMode('LENGTH_TO_OD')"
+                                class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition bg-blue-600 text-white shadow-xs"
+                            >
+                                Nhập Dài (m) ➔ Tính Đường kính (OD)
+                            </button>
+                            <button
+                                type="button"
+                                id="modeBtnOdToLength"
+                                onclick="setRollCalcMode('OD_TO_LENGTH')"
+                                class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition text-slate-700 hover:text-slate-900"
+                            >
+                                Nhập Đường kính (OD) ➔ Tính Dài (m)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 sm:p-5 space-y-5">
+
+                        <!-- Row 1: Core Diameter (inch) & Total Thickness (µm) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Core Diameter (inch: 3, 5, 6 or custom) -->
+                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-200/80 flex flex-col justify-between gap-2.5">
+                                <div>
+                                    <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+                                        <label for="coreDiameterInchInput" class="text-xs font-bold text-indigo-950">
+                                            Đường kính ống lõi (Core ID)
+                                        </label>
+                                        <span class="text-[11px] font-mono font-semibold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">
+                                            1 inch = 25.4 mm
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-stretch bg-white border border-indigo-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-600">
+                                        <input
+                                            id="coreDiameterInchInput"
+                                            type="number"
+                                            step="any"
+                                            min="0.5"
+                                            value="3"
+                                            oninput="handleCoreDiameterInput(this.value)"
+                                            placeholder="Nhập số inch..."
+                                            class="w-full min-w-0 px-3 py-2 text-lg font-mono font-bold text-slate-900 bg-transparent outline-none"
+                                        >
+                                        <span class="px-3 bg-indigo-100/70 text-xs font-mono font-bold text-indigo-800 flex items-center border-l border-indigo-200 shrink-0">inch</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                                    <span class="text-xs text-slate-600">
+                                        Lõi quy đổi: <strong id="coreDiameterMmText" class="font-mono text-indigo-900">76.2 mm</strong>
+                                    </span>
+                                    <div class="flex items-center gap-1.5 no-print">
+                                        <span class="text-[11px] text-slate-500">Chọn nhanh:</span>
+                                        <button type="button" id="coreBtn3" onclick="setQuickCoreInch(3)" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-indigo-600 text-white border-indigo-600">3"</button>
+                                        <button type="button" id="coreBtn5" onclick="setQuickCoreInch(5)" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:bg-indigo-50">5"</button>
+                                        <button type="button" id="coreBtn6" onclick="setQuickCoreInch(6)" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:bg-indigo-50">6"</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Thickness (µm - Auto synced with Table 1 or Manual Override) -->
+                            <div class="bg-sky-50/50 p-4 rounded-xl border border-sky-200/80 flex flex-col justify-between gap-2.5">
+                                <div>
+                                    <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+                                        <label for="diameterThicknessInput" class="text-xs font-bold text-sky-950">
+                                            Tổng độ dày màng (Thickness)
+                                        </label>
+                                        <span id="thicknessSyncBadge" class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                            Tự động theo Bảng 1
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-stretch bg-white border border-sky-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-sky-500/30 focus-within:border-sky-600">
+                                        <input
+                                            id="diameterThicknessInput"
+                                            type="number"
+                                            step="any"
+                                            min="0.1"
+                                            value="200"
+                                            oninput="handleCustomDiameterThicknessInput()"
+                                            class="w-full min-w-0 px-3 py-2 text-lg font-mono font-bold text-slate-900 bg-transparent outline-none"
+                                        >
+                                        <span class="px-3 bg-sky-100/70 text-xs font-mono font-bold text-sky-900 flex items-center border-l border-sky-200 shrink-0">µm</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-600">
+                                    <span>Quy đổi: <strong id="diameterThicknessMmText" class="font-mono text-sky-900">0.200 mm</strong></span>
+                                    <button
+                                        type="button"
+                                        id="resyncThicknessBtn"
+                                        onclick="resyncDiameterThickness()"
+                                        class="hidden text-xs font-semibold text-blue-600 hover:text-blue-800 underline cursor-pointer no-print"
+                                    >
+                                        Đồng bộ từ Bảng 1 (<span id="layerTableThicknessRef">200.0</span> µm) ↺
+                                    </button>
+                                    <span id="thicknessAutoNote" class="text-[11px] text-slate-500">Có thể gõ trực tiếp để thử nghiệm độ dày khác</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Two-way Roll Length (m) <---> Roll Outer Diameter (OD - mm) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Roll Length (m) -->
+                            <div id="lengthCardContainer" class="p-4 rounded-xl border-2 border-blue-500 bg-blue-50/40 transition flex flex-col justify-between gap-2.5">
+                                <div>
+                                    <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+                                        <label for="rollLengthInput" class="text-xs font-bold text-slate-800">
+                                            Chiều dài cuộn màng (Length - L)
+                                        </label>
+                                        <span id="lengthRoleBadge" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white">
+                                            Đang nhập Dài (m)
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-stretch bg-white border border-slate-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:border-blue-600">
+                                        <input
+                                            id="rollLengthInput"
+                                            type="number"
+                                            step="any"
+                                            min="0"
+                                            value="4000"
+                                            oninput="handleRollLengthDirectInput()"
+                                            class="w-full min-w-0 px-3 py-2 text-lg font-mono font-bold text-slate-900 bg-transparent outline-none"
+                                        >
+                                        <span class="px-3.5 bg-slate-100 text-xs font-mono font-bold text-slate-700 flex items-center border-l border-slate-200 shrink-0">m</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] text-slate-600">
+                                    <span>Chọn nhanh chiều dài:</span>
+                                    <div class="flex flex-wrap gap-1 no-print">
+                                        <button type="button" onclick="setQuickRollLength(1000)" class="px-2 py-0.5 bg-white hover:bg-blue-50 border border-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">1000m</button>
+                                        <button type="button" onclick="setQuickRollLength(2000)" class="px-2 py-0.5 bg-white hover:bg-blue-50 border border-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">2000m</button>
+                                        <button type="button" onclick="setQuickRollLength(4000)" class="px-2 py-0.5 bg-white hover:bg-blue-50 border border-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">4000m</button>
+                                        <button type="button" onclick="setQuickRollLength(6000)" class="px-2 py-0.5 bg-white hover:bg-blue-50 border border-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">6000m</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Roll Outer Diameter (OD - mm) -->
+                            <div id="odCardContainer" class="p-4 rounded-xl border border-amber-300 bg-amber-50/40 transition flex flex-col justify-between gap-2.5">
+                                <div>
+                                    <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+                                        <label for="rollOdMmInput" class="text-xs font-bold text-slate-800">
+                                            Đường kính ngoài cuộn (OD - Gồm lõi)
+                                        </label>
+                                        <span id="odRoleBadge" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+                                            Tự động tính từ Dài (m)
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-stretch bg-white border border-amber-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-amber-500/30 focus-within:border-amber-600">
+                                        <input
+                                            id="rollOdMmInput"
+                                            type="number"
+                                            step="any"
+                                            min="1"
+                                            value="1012.1"
+                                            oninput="handleRollOdDirectInput()"
+                                            class="w-full min-w-0 px-3 py-2 text-lg font-mono font-bold text-slate-900 bg-transparent outline-none"
+                                        >
+                                        <span class="px-3 bg-amber-100/80 text-xs font-mono font-bold text-amber-900 flex items-center border-l border-amber-200 shrink-0">mm</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] text-slate-600">
+                                    <span>Chọn nhanh OD:</span>
+                                    <div class="flex flex-wrap gap-1 no-print">
+                                        <button type="button" onclick="setQuickRollOd(300)" class="px-2 py-0.5 bg-white hover:bg-amber-100 border border-amber-300 rounded text-[11px] font-mono font-semibold text-amber-900">300mm</button>
+                                        <button type="button" onclick="setQuickRollOd(450)" class="px-2 py-0.5 bg-white hover:bg-amber-100 border border-amber-300 rounded text-[11px] font-mono font-semibold text-amber-900">450mm</button>
+                                        <button type="button" onclick="setQuickRollOd(600)" class="px-2 py-0.5 bg-white hover:bg-amber-100 border border-amber-300 rounded text-[11px] font-mono font-semibold text-amber-900">600mm</button>
+                                        <button type="button" onclick="setQuickRollOd(800)" class="px-2 py-0.5 bg-white hover:bg-amber-100 border border-amber-300 rounded text-[11px] font-mono font-semibold text-amber-900">800mm</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warning Banner if OD <= Core Diameter -->
+                        <div id="odWarningBanner" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-medium items-center gap-2">
+                            <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span>Đường kính ngoài cuộn (OD) phải lớn hơn đường kính ống lõi (<strong id="warningCoreMmText">76.2 mm</strong>) để tính được chiều dài màng!</span>
+                        </div>
+
+                        <!-- Row 3: Roll Width (mm) & Roll Quantity (cuộn) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                            <!-- Roll Width (mm) -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between gap-2.5">
+                                <div>
+                                    <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+                                        <label for="rollWidthInput" class="text-xs font-bold text-slate-700">
+                                            Khổ rộng cuộn màng (Width)
+                                        </label>
+                                        <span class="text-[11px] text-slate-500">Quy đổi: <strong id="widthInMetersText" class="font-mono text-slate-800">0.500 m</strong></span>
+                                    </div>
+                                    <div class="flex items-stretch bg-white border border-slate-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:border-blue-600">
+                                        <input
+                                            id="rollWidthInput"
+                                            type="number"
+                                            step="1"
+                                            min="1"
+                                            value="500"
+                                            oninput="recalculateAll()"
+                                            class="w-full min-w-0 px-3 py-2 text-lg font-mono font-bold text-slate-900 bg-transparent outline-none"
+                                        >
+                                        <span class="px-3 bg-slate-100 text-xs font-mono font-bold text-slate-600 flex items-center border-l border-slate-200 shrink-0">mm</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+                                    <span>Khổ thông dụng:</span>
+                                    <div class="flex gap-1 no-print">
+                                        <button type="button" onclick="setQuickRollWidth(300)" class="px-2 py-0.5 bg-slate-200/70 hover:bg-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">300</button>
+                                        <button type="button" onclick="setQuickRollWidth(500)" class="px-2 py-0.5 bg-slate-200/70 hover:bg-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">500</button>
+                                        <button type="button" onclick="setQuickRollWidth(800)" class="px-2 py-0.5 bg-slate-200/70 hover:bg-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">800</button>
+                                        <button type="button" onclick="setQuickRollWidth(1000)" class="px-2 py-0.5 bg-slate-200/70 hover:bg-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">1000</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Roll Quantity (Số cuộn) -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between gap-2.5">
+                                <div>
+                                    <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+                                        <label for="rollQtyInput" class="text-xs font-bold text-slate-700">
+                                            Số lượng cuộn (Quantity)
+                                        </label>
+                                        <span class="text-[11px] text-slate-500">Tổng dài: <strong id="totalLengthAllRollsText" class="font-mono text-slate-800">4,000 m</strong></span>
+                                    </div>
+                                    <div class="flex items-stretch bg-white border border-slate-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:border-blue-600">
+                                        <input
+                                            id="rollQtyInput"
+                                            type="number"
+                                            step="1"
+                                            min="1"
+                                            value="1"
+                                            oninput="recalculateAll()"
+                                            class="w-full min-w-0 px-3 py-2 text-lg font-mono font-bold text-slate-900 bg-transparent outline-none"
+                                        >
+                                        <span class="px-3 bg-slate-100 text-xs font-mono font-bold text-slate-600 flex items-center border-l border-slate-200 shrink-0">cuộn</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+                                    <span>Chọn nhanh:</span>
+                                    <div class="flex gap-1 no-print">
+                                        <button type="button" onclick="setQuickRollQty(1)" class="px-2 py-0.5 bg-slate-200/70 hover:bg-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">1</button>
+                                        <button type="button" onclick="setQuickRollQty(5)" class="px-2 py-0.5 bg-slate-200/70 hover:bg-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">5</button>
+                                        <button type="button" onclick="setQuickRollQty(10)" class="px-2 py-0.5 bg-slate-200/70 hover:bg-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">10</button>
+                                        <button type="button" onclick="setQuickRollQty(20)" class="px-2 py-0.5 bg-slate-200/70 hover:bg-slate-300 rounded text-[11px] font-mono font-semibold text-slate-700">20</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 4: Visual Roll Diagram & Summary Banner -->
+                        <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 border border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+                            <div class="md:col-span-5 flex flex-col items-center justify-center bg-slate-800/70 rounded-xl p-3 border border-slate-700/80">
+                                <div id="rollSvgContainer" class="w-40 h-40 flex items-center justify-center">
+                                    <!-- SVG Roll Injected by JS -->
+                                </div>
+                                <span class="text-[11px] font-mono text-slate-400 mt-1 text-center">
+                                    Mô phỏng mặt cắt cuộn màng & lõi
+                                </span>
+                            </div>
+
+                            <div class="md:col-span-7 space-y-3.5 min-w-0">
+                                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+                                    <div>
+                                        <span class="text-[11px] font-mono text-indigo-300 block">Tóm tắt thông số cuộn</span>
+                                        <h3 class="text-sm sm:text-base font-bold text-white">Đường kính ngoài (OD) & Chiều dài (L)</h3>
+                                    </div>
+                                    <span id="rollCoreBadge" class="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                                        Lõi 3" (76.2 mm)
+                                    </span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div class="bg-slate-800/90 p-3 rounded-xl border border-amber-500/30">
+                                        <span class="text-[11px] text-amber-200/80 block">Đường kính ngoài (OD)</span>
+                                        <div class="flex items-baseline gap-1.5 mt-0.5">
+                                            <span id="sectionRollOdMm" class="text-2xl font-extrabold font-mono text-amber-400">1,012.1</span>
+                                            <span class="text-xs font-mono text-amber-200">mm</span>
+                                        </div>
+                                        <span class="text-[11px] font-mono text-slate-400 block mt-0.5">
+                                            ≈ <strong id="sectionRollOdCm" class="text-slate-200">101.21 cm</strong> (<span id="sectionRollOdInch">39.85"</span>)
+                                        </span>
+                                    </div>
+
+                                    <div class="bg-slate-800/90 p-3 rounded-xl border border-blue-500/30">
+                                        <span class="text-[11px] text-blue-200/80 block">Chiều dài màng trên cuộn (L)</span>
+                                        <div class="flex items-baseline gap-1.5 mt-0.5">
+                                            <span id="sectionRollLengthM" class="text-2xl font-extrabold font-mono text-sky-400">4,000.0</span>
+                                            <span class="text-xs font-mono text-sky-200">m</span>
+                                        </div>
+                                        <span class="text-[11px] font-mono text-slate-400 block mt-0.5">
+                                            Độ dày tính: <strong id="sectionUsedThickness" class="text-slate-200">200.0 µm</strong>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/80">
+                                        <span class="text-[10px] text-slate-400 block">Ống lõi (d<sub>lõi</sub>)</span>
+                                        <span id="sectionCoreMm" class="text-xs font-bold font-mono text-slate-100 mt-0.5 block">76.2 mm</span>
+                                    </div>
+                                    <div class="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/80">
+                                        <span class="text-[10px] text-slate-400 block">Thịt màng (1 bên)</span>
+                                        <span id="sectionFilmWallMm" class="text-xs font-bold font-mono text-sky-400 mt-0.5 block">468.0 mm</span>
+                                    </div>
+                                    <div class="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/80">
+                                        <span class="text-[10px] text-slate-400 block">Số vòng quấn</span>
+                                        <span id="sectionRollTurns" class="text-xs font-bold font-mono text-emerald-400 mt-0.5 block">2,340 vòng</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 3. Visual Cross-Section Diagram -->
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="px-4 sm:px-5 py-3.5 bg-slate-50/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                            <h3 class="text-sm font-bold text-slate-800">Mô phỏng mặt cắt ngang cấu trúc màng ghép</h3>
+                        </div>
+                        <span class="text-xs text-slate-500">Tỷ lệ chiều cao mô phỏng theo độ dày (µm) của từng lớp</span>
+                    </div>
+
+                    <div class="p-4 sm:p-5">
+                        <div class="text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center justify-between">
+                            <span>▲ Mặt ngoài (Bề mặt in / Ngoài cùng)</span>
+                            <span>Tổng: <strong id="diagramTotalMicron" class="text-slate-600 font-mono">200.0 µm</strong></span>
+                        </div>
+
+                        <div id="crossSectionContainer" class="rounded-xl overflow-hidden border-2 border-slate-300 shadow-inner bg-slate-100 flex flex-col">
+                            <!-- Injected via JS -->
+                        </div>
+
+                        <div class="text-[11px] font-semibold text-slate-400 mt-1.5 flex items-center justify-between">
+                            <span>▼ Mặt trong (Lớp hàn dán / Tiếp xúc sản phẩm)</span>
+                            <span id="diagramTotalGsm" class="text-slate-600 font-mono font-bold">200.11 g/m²</span>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Real-Time Calculation Results Dashboard (4 cols on XL) -->
+            <div class="xl:col-span-4 space-y-6 xl:sticky xl:top-20 min-w-0">
+
+                <!-- Main Result Card -->
+                <section class="bg-slate-900 text-white rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
+                    <div class="px-5 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 flex items-center justify-between gap-2">
+                        <div>
+                            <span class="text-[11px] font-mono text-blue-100 block">BẢNG KẾT QUẢ TỔNG HỢP</span>
+                            <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-white">GSM, Khối Lượng, OD & Chiều Dài</h2>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="p-5 space-y-4">
+                        <!-- Highlight 1: Total GSM -->
+                        <div class="bg-slate-800/90 rounded-xl p-4 border border-slate-700/80">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-medium text-slate-300">Định lượng tổng (Total GSM)</span>
+                                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">g/m²</span>
+                            </div>
+                            <div class="mt-1 flex items-baseline justify-between flex-wrap gap-2">
+                                <div id="cardTotalGsm" class="text-3xl font-extrabold font-mono text-emerald-400 tracking-tight">200.11</div>
+                                <div class="text-xs text-slate-400 font-mono">
+                                    Độ dày: <strong id="cardTotalThickness" class="text-slate-200">200.0 µm</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Highlight 2: Single Roll Weight -->
+                        <div class="bg-gradient-to-br from-blue-600/25 to-indigo-600/20 rounded-xl p-4 border border-blue-400/40 shadow-inner">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-semibold text-blue-200">KHỐI LƯỢNG 1 CUỘN MÀNG</span>
+                                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-500/30 text-blue-200">Kilogram (kg)</span>
+                            </div>
+                            <div class="mt-1.5 flex items-baseline gap-2">
+                                <span id="cardSingleRollWeightKg" class="text-4xl font-extrabold font-mono text-white tracking-tight">400.22</span>
+                                <span class="text-lg font-bold font-mono text-blue-300">kg</span>
+                            </div>
+                            <div class="mt-2 pt-2 border-t border-blue-400/20 flex items-center justify-between text-xs text-blue-200/90 font-mono">
+                                <span>Quy đổi gam:</span>
+                                <span id="cardSingleRollWeightGram">400,220 g</span>
+                            </div>
+                        </div>
+
+                        <!-- Highlight 3: Roll OD & Roll Length -->
+                        <div class="bg-gradient-to-br from-amber-500/20 to-orange-600/15 rounded-xl p-4 border border-amber-400/40 shadow-inner space-y-2.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-semibold text-amber-200">ĐƯỜNG KÍNH (OD) & CHIỀU DÀI</span>
+                                <span id="cardCoreLabel" class="text-[11px] font-mono px-2 py-0.5 rounded bg-amber-500/25 text-amber-200 border border-amber-400/30">Lõi 3"</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2.5 pt-1">
+                                <div class="bg-slate-900/60 p-2.5 rounded-lg border border-amber-400/20">
+                                    <span class="text-[10px] text-amber-200/70 block">Đường kính cuộn (OD)</span>
+                                    <span id="cardRollOdMm" class="text-lg font-extrabold font-mono text-amber-400">1,012.1 mm</span>
+                                    <span id="cardRollOdCm" class="text-[11px] font-mono text-slate-300 block">101.21 cm</span>
+                                </div>
+                                <div class="bg-slate-900/60 p-2.5 rounded-lg border border-sky-400/20">
+                                    <span class="text-[10px] text-sky-200/70 block">Chiều dài cuộn (L)</span>
+                                    <span id="cardRollLengthM" class="text-lg font-extrabold font-mono text-sky-400">4,000.0 m</span>
+                                    <span id="cardWallMmDetail" class="text-[11px] font-mono text-slate-300 block">Thịt: 468.0 mm</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Highlight 4: Total Weight for N Rolls -->
+                        <div class="bg-slate-800/90 rounded-xl p-4 border border-slate-700/80 flex items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs text-slate-300 block">Tổng khối lượng (<span id="cardRollQtyLabel" class="font-bold text-white">1</span> cuộn):</span>
+                                <span id="cardTotalAreaAllRolls" class="text-[11px] text-slate-400 font-mono">Tổng diện tích: 2,000.0 m²</span>
+                            </div>
+                            <div class="text-right">
+                                <span id="cardTotalRollsWeightKg" class="text-2xl font-extrabold font-mono text-emerald-400">400.22</span>
+                                <span class="text-xs font-mono text-emerald-300 ml-1">kg</span>
+                            </div>
+                        </div>
+
+                        <!-- Key Metrics Grid -->
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/70">
+                                <span class="text-[11px] text-slate-400 block">Diện tích 1 cuộn</span>
+                                <div class="mt-0.5 flex items-baseline gap-1">
+                                    <span id="cardRollAreaM2" class="text-base font-bold font-mono text-slate-100">2,000.0</span>
+                                    <span class="text-xs font-mono text-slate-400">m²</span>
+                                </div>
+                            </div>
+                            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/70">
+                                <span class="text-[11px] text-slate-400 block">Hiệu suất (m²/kg)</span>
+                                <div class="mt-0.5 flex items-baseline gap-1">
+                                    <span id="cardYieldM2PerKg" class="text-base font-bold font-mono text-slate-100">5.00</span>
+                                    <span class="text-xs font-mono text-slate-400">m²/kg</span>
+                                </div>
+                            </div>
+                            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/70 col-span-2 flex items-center justify-between gap-2">
+                                <span class="text-[11px] text-slate-400">Số mét dài / 1 kg màng (khổ <span id="yieldWidthLabel">500</span>mm)</span>
+                                <div class="flex items-baseline gap-1 shrink-0">
+                                    <span id="cardYieldMetersPerKg" class="text-base font-bold font-mono text-sky-400">9.99</span>
+                                    <span class="text-xs font-mono text-slate-400">m/kg</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Formula Verification Box -->
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <h3 class="text-xs font-bold text-slate-700">DIỄN GIẢI CÔNG THỨC TÍNH TRỰC TIẾP</h3>
+                    </div>
+
+                    <div class="p-4 space-y-3 text-xs text-slate-600">
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                            <div class="font-bold text-slate-800 mb-1">1. Tổng GSM màng ghép:</div>
+                            <div id="formulaStepGsmBreakdown" class="font-mono text-[11px] text-emerald-700 bg-emerald-50/70 px-2.5 py-1.5 rounded border border-emerald-200 break-words">
+                                24.39 + 175.72 = 200.11 g/m²
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl bg-blue-50/60 border border-blue-200/80">
+                            <div class="font-bold text-blue-950 mb-1">2. Khối lượng cuộn màng (kg/roll):</div>
+                            <div class="font-mono text-[11px] text-blue-900 bg-white px-2.5 py-2 rounded border border-blue-200 space-y-1">
+                                <div class="text-pink-700 font-semibold">Weight (kg) = (GSM × L(m) × W(mm)) / 1,000,000</div>
+                                <div id="formulaStepWeightMath" class="font-bold text-blue-700 pt-1 border-t border-slate-100 break-words">
+                                    = (200.11 × 4000 × 500) / 1,000,000 = 400.22 kg
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80">
+                            <div class="font-bold text-amber-950 mb-1">3. Quan hệ Đường kính ngoài (OD) & Chiều dài (L):</div>
+                            <div class="font-mono text-[11px] text-amber-900 bg-white px-2.5 py-2 rounded border border-amber-200 space-y-1">
+                                <div class="text-amber-800 font-semibold">• OD (mm) = √[ d<sub>lõi</sub>² + (4 × L(m) × T(µm)) / π ]</div>
+                                <div class="text-sky-800 font-semibold">• L (m) = [ π × (OD² - d<sub>lõi</sub>²) ] / [ 4 × T(µm) ]</div>
+                                <div id="formulaStepDiameterMath" class="font-bold text-slate-800 pt-1 border-t border-slate-100 break-words">
+                                    OD = √[ 76.2² + (4 × 4000 × 200) / π ] = 1,012.1 mm
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-10 py-4 text-center text-xs text-slate-500 no-print">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>Công cụ Tính GSM, Khối Lượng, Đường Kính & Chiều Dài Cuộn Màng Ghép Đa Lớp</span>
+            <span class="font-mono text-[11px] text-slate-400">GSM = µm × g/cm³ | OD = √(d² + 4·L·T/π) | L = π·(OD² - d²)/(4·T)</span>
+        </div>
+    </footer>
+
+    <!-- Modal: Standard Material Density Reference Table -->
+    <div id="referenceModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="text-base font-bold">Bảng Tra Cứu 28 Vật Liệu & Tỷ Trọng (Density) Chuẩn</h3>
+                <button type="button" onclick="toggleReferenceModal(false)" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-3 text-sm">
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-orange-100 text-slate-800 font-bold border-b border-slate-200">
+                                <th class="py-2.5 px-3 w-12 text-center">#</th>
+                                <th class="py-2.5 px-3">Film (Tên vật liệu)</th>
+                                <th class="py-2.5 px-3 text-right">Density (g/cm³)</th>
+                                <th class="py-2.5 px-3 text-right">Độ dày gợi ý (µm)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="referenceModalBody" class="divide-y divide-slate-200"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button type="button" onclick="toggleReferenceModal(false)" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition">
+                    Đóng bảng tra cứu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script>
+        const MATERIAL_LIBRARY = [
+            { id: 'ALU', code: 'ALU', name: 'ALU', density: 2.71, defaultThickness: 9, commonMicrons: '7, 9, 12', color: '#94a3b8', textColor: '#0f172a', metallic: true },
+            { id: 'CPP', code: 'CPP', name: 'CPP', density: 0.91, defaultThickness: 30, commonMicrons: '20, 25, 30, 50', color: '#f59e0b', textColor: '#ffffff' },
+            { id: 'MCPP', code: 'MCPP', name: 'MCPP', density: 0.91, defaultThickness: 25, commonMicrons: '20, 25, 30', color: '#78716c', textColor: '#ffffff', metallic: true },
+            { id: 'LLDPE', code: 'LLDPE', name: 'LLDPE', density: 0.9198, defaultThickness: 50, commonMicrons: '30, 40, 50, 70', color: '#10b981', textColor: '#ffffff' },
+            { id: 'MDO_EXP001', code: 'MDO print film (EXP001)', name: 'MDO print film (EXP001)', density: 0.954, defaultThickness: 25, commonMicrons: '20, 25, 30', color: '#06b6d4', textColor: '#ffffff' },
+            { id: 'LL_LOW_SIT', code: 'LL low SIT Ajinomoto', name: 'LL low SIT Ajinomoto', density: 0.94, defaultThickness: 40, commonMicrons: '30, 40, 50', color: '#14b8a6', textColor: '#ffffff' },
+            { id: 'PE_BL_SM', code: 'PE-BL-SM-EXP032_40-7L-V00', name: 'PE-BL-SM-EXP032_40-7L-V00', density: 0.95314, defaultThickness: 40, commonMicrons: '40, 50, 60', color: '#0d9488', textColor: '#ffffff' },
+            { id: 'WHITE_LLDPE', code: 'WHITE-LLDPE', name: 'WHITE-LLDPE', density: 0.92, defaultThickness: 191, commonMicrons: '50, 100, 191', color: '#38bdf8', textColor: '#0f172a' },
+            { id: 'EVOH_32', code: 'EVOH 32 mol', name: 'EVOH 32 mol', density: 1.19, defaultThickness: 10, commonMicrons: '5, 10, 15', color: '#a855f7', textColor: '#ffffff' },
+            { id: 'EVOH_27', code: 'EVOH 27 mol', name: 'EVOH 27 mol', density: 1.21, defaultThickness: 10, commonMicrons: '5, 10, 15', color: '#9333ea', textColor: '#ffffff' },
+            { id: 'PE', code: 'PE', name: 'PE', density: 0.92, defaultThickness: 45, commonMicrons: '30, 45, 60, 80', color: '#059669', textColor: '#ffffff' },
+            { id: 'HDPE', code: 'HDPE', name: 'HDPE', density: 0.957, defaultThickness: 35, commonMicrons: '25, 35, 50', color: '#047857', textColor: '#ffffff' },
+            { id: 'BOPP', code: 'BOPP', name: 'BOPP', density: 0.91, defaultThickness: 20, commonMicrons: '18, 20, 25, 30', color: '#0ea5e9', textColor: '#ffffff' },
+            { id: 'MATT_OPP', code: 'Matt-OPP ( 20 )', name: 'Matt-OPP ( 20 )', density: 0.91, defaultThickness: 20, commonMicrons: '18, 20, 25', color: '#0284c7', textColor: '#ffffff' },
+            { id: 'WHITE_OPP', code: '247 LL38 ( White - OPP )', name: '247 LL38 ( White - OPP )', density: 0.62, defaultThickness: 30, commonMicrons: '25, 30, 35, 38', color: '#7dd3fc', textColor: '#0f172a' },
+            { id: 'PET', code: 'PET', name: 'PET', density: 1.40, defaultThickness: 12, commonMicrons: '12, 15, 19, 23', color: '#3b82f6', textColor: '#ffffff' },
+            { id: 'MPET', code: 'MPET', name: 'MPET', density: 1.40, defaultThickness: 12, commonMicrons: '12, 15', color: '#64748b', textColor: '#ffffff', metallic: true },
+            { id: 'NYLON', code: 'Nylon, K-Nylon', name: 'Nylon, K-Nylon', density: 1.16, defaultThickness: 15, commonMicrons: '15, 18, 25', color: '#8b5cf6', textColor: '#ffffff' },
+            { id: 'PVC', code: 'PVC', name: 'PVC', density: 1.40, defaultThickness: 40, commonMicrons: '30, 40, 50', color: '#ec4899', textColor: '#ffffff' },
+            { id: 'EAA', code: 'Ethylene Acrylic Acid = EAA', name: 'Ethylene Acrylic Acid = EAA', density: 0.94, defaultThickness: 20, commonMicrons: '15, 20, 25', color: '#f43f5e', textColor: '#ffffff' },
+            { id: 'NUCREL_3990', code: 'NUCREL 3990', name: 'NUCREL 3990', density: 0.94, defaultThickness: 20, commonMicrons: '15, 20, 25', color: '#e11d48', textColor: '#ffffff' },
+            { id: 'SURLYN_1652', code: 'SURLYN 1652', name: 'SURLYN 1652', density: 0.94, defaultThickness: 25, commonMicrons: '20, 25, 30', color: '#be123c', textColor: '#ffffff' },
+            { id: 'APPEAL_625', code: 'Appeal 11 D 625 ( Easy-peel )', name: 'Appeal 11 D 625 ( Easy-peel )', density: 0.94, defaultThickness: 25, commonMicrons: '20, 25, 30', color: '#fb7185', textColor: '#0f172a' },
+            { id: 'EL_83K', code: 'EL 83 K ( Easy-peel )', name: 'EL 83 K ( Easy-peel )', density: 0.94, defaultThickness: 25, commonMicrons: '20, 25, 30', color: '#fda4af', textColor: '#0f172a' },
+            { id: 'AFFINITY_1450', code: 'Affinity PT 1450', name: 'Affinity PT 1450', density: 0.902, defaultThickness: 30, commonMicrons: '25, 30, 40', color: '#6366f1', textColor: '#ffffff' },
+            { id: 'PAPER', code: 'Paper', name: 'Paper', density: 1.00, defaultThickness: 60, commonMicrons: '50, 60, 70, 80', color: '#b45309', textColor: '#ffffff' },
+            { id: 'INK', code: 'INK', name: 'INK', density: 1.00, defaultThickness: 2, commonMicrons: '1.5, 2, 3', color: '#eab308', textColor: '#0f172a' },
+            { id: 'Adhesive', code: 'Adhesive', name: 'Adhesive', density: 1.00, defaultThickness: 2.5, commonMicrons: '2, 2.5, 3.5', color: '#facc15', textColor: '#0f172a' },
+            { id: 'CUSTOM', code: 'TÙY CHỈNH', name: 'Tùy chỉnh (Nhập tên & tỷ trọng riêng)', density: 1.00, defaultThickness: 20, commonMicrons: 'Tùy chọn', color: '#475569', textColor: '#ffffff' }
+        ];
+
+        let layers = [
+            { uid: 'layer-1', materialId: 'ALU', customCode: 'ALU', thickness: 9, density: 2.71 },
+            { uid: 'layer-2', materialId: 'WHITE_LLDPE', customCode: 'WHITE-LLDPE', thickness: 191, density: 0.92 }
+        ];
+
+        let nextUidCounter = 10;
+        let isDiameterThicknessOverridden = false;
+        // 'LENGTH_TO_OD' (nhập Dài -> tính OD) hoặc 'OD_TO_LENGTH' (nhập OD -> tính Dài)
+        let rollCalcMode = 'LENGTH_TO_OD';
+
+        function formatDensityDisplay(val) {
+            const num = Number(val);
+            if (!Number.isFinite(num)) return '0.00';
+            const str5 = num.toFixed(5).replace(/0+$/, '');
+            const parts = str5.split('.');
+            if (!parts[1] || parts[1].length < 2) return num.toFixed(2);
+            return str5;
+        }
+
+        function getMaterialById(materialId) {
+            return MATERIAL_LIBRARY.find(m => m.id === materialId) || MATERIAL_LIBRARY[0];
+        }
+
+        function formatNumber(num, decimals = 2) {
+            if (!Number.isFinite(num)) return '0.00';
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function renderLayersTable() {
+            const tbody = document.getElementById('layersTableBody');
+            tbody.innerHTML = '';
+
+            const extraGsm = Math.max(0, parseFloat(document.getElementById('extraGsmInput').value) || 0);
+            const layersGsmSum = layers.reduce((acc, layer) => {
+                return acc + (Math.max(0, parseFloat(layer.thickness) || 0) * Math.max(0, parseFloat(layer.density) || 0));
+            }, 0);
+            const totalGsm = layersGsmSum + extraGsm;
+
+            layers.forEach((layer, index) => {
+                const mat = getMaterialById(layer.materialId);
+                const layerGsm = (Math.max(0, parseFloat(layer.thickness) || 0)) * (Math.max(0, parseFloat(layer.density) || 0));
+                const gsmPercent = totalGsm > 0 ? (layerGsm / totalGsm) * 100 : 0;
+                const isCustomModifiedDensity = Math.abs((parseFloat(layer.density) || 0) - mat.density) > 0.00001;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/90 transition';
+
+                const optionsHtml = MATERIAL_LIBRARY.map(item => {
+                    const selected = item.id === layer.materialId ? 'selected' : '';
+                    return `<option value="${item.id}" ${selected}>${item.name} — [Density: ${formatDensityDisplay(item.density)}]</option>`;
+                }).join('');
+
+                tr.innerHTML = `
+                    <td class="py-3 pl-4 pr-2 text-center align-middle">
+                        <div class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-mono font-bold"
+                             style="background-color: ${mat.color}; color: ${mat.textColor};">
+                            L${index + 1}
+                        </div>
+                    </td>
+
+                    <td class="py-3 px-2 align-middle">
+                        <div class="flex flex-col gap-1.5">
+                            <div class="relative">
+                                <select
+                                    onchange="handleMaterialChange('${layer.uid}', this.value)"
+                                    class="w-full appearance-none pl-3 pr-8 py-2 text-xs sm:text-sm font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer truncate"
+                                >
+                                    ${optionsHtml}
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-500">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            ${layer.materialId === 'CUSTOM' ? `
+                                <input
+                                    type="text"
+                                    value="${layer.customCode || 'CUSTOM'}"
+                                    placeholder="Nhập tên/ký hiệu lớp..."
+                                    oninput="handleCustomCodeChange('${layer.uid}', this.value)"
+                                    class="w-full px-2.5 py-1.5 text-xs font-mono text-slate-700 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500"
+                                >
+                            ` : ''}
+                        </div>
+                    </td>
+
+                    <td class="py-3 px-2 align-middle">
+                        <div id="density-group-${layer.uid}" class="flex items-stretch rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition ${isCustomModifiedDensity ? 'bg-amber-50/70 border-amber-400' : 'bg-white border-slate-300'}">
+                            <input
+                                id="density-input-${layer.uid}"
+                                type="number"
+                                step="any"
+                                min="0"
+                                value="${layer.density}"
+                                oninput="handleLayerValueInput('${layer.uid}', 'density', this.value)"
+                                class="w-full min-w-[72px] px-2.5 py-2 text-right font-mono text-sm font-bold ${isCustomModifiedDensity ? 'text-amber-800' : 'text-slate-900'} bg-transparent outline-none"
+                            >
+                            <span class="px-2 bg-slate-100 text-[10px] font-mono text-slate-500 flex items-center justify-center border-l border-slate-200 shrink-0">g/cm³</span>
+                        </div>
+                        <div id="density-hint-${layer.uid}" class="mt-1 flex items-center justify-end gap-1 text-[10px]">
+                            ${isCustomModifiedDensity ? `
+                                <button type="button" onclick="resetLayerDensity('${layer.uid}')" class="text-amber-600 hover:text-amber-800 underline font-medium cursor-pointer">
+                                    Chuẩn: ${formatDensityDisplay(mat.density)} ↺
+                                </button>
+                            ` : `<span class="text-slate-400 font-mono">Chuẩn: ${formatDensityDisplay(mat.density)}</span>`}
+                        </div>
+                    </td>
+
+                    <td class="py-3 px-2 align-middle">
+                        <div class="flex items-stretch rounded-xl bg-cyan-50/60 border border-cyan-300 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition">
+                            <input
+                                type="number"
+                                step="any"
+                                min="0"
+                                value="${layer.thickness}"
+                                oninput="handleLayerValueInput('${layer.uid}', 'thickness', this.value)"
+                                class="w-full min-w-[60px] px-2.5 py-2 text-right font-mono text-sm font-bold text-slate-900 bg-transparent outline-none"
+                            >
+                            <span class="px-2.5 bg-cyan-100/70 text-[11px] font-mono font-semibold text-cyan-900 flex items-center justify-center border-l border-cyan-200 shrink-0">µm</span>
+                        </div>
+                    </td>
+
+                    <td class="py-3 px-3 text-right align-middle">
+                        <div class="inline-flex items-baseline gap-1 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                            <span id="layer-gsm-${layer.uid}" class="font-mono text-sm font-extrabold text-slate-900">${formatNumber(layerGsm, 2)}</span>
+                            <span class="text-[10px] font-mono text-slate-500">g/m²</span>
+                        </div>
+                    </td>
+
+                    <td class="py-3 px-2 text-right align-middle hidden md:table-cell">
+                        <div class="flex flex-col items-end gap-1">
+                            <span id="layer-pct-${layer.uid}" class="font-mono text-xs font-semibold text-slate-600">${formatNumber(gsmPercent, 1)}%</span>
+                            <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div id="layer-bar-${layer.uid}" class="h-full rounded-full" style="width: ${Math.min(100, gsmPercent)}%; background-color: ${mat.color};"></div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="py-3 pl-2 pr-4 text-center align-middle no-print">
+                        <div class="inline-flex items-center gap-0.5">
+                            <button type="button" onclick="moveLayer(${index}, -1)" ${index === 0 ? 'disabled' : ''} class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200/70 disabled:opacity-30">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                            </button>
+                            <button type="button" onclick="moveLayer(${index}, 1)" ${index === layers.length - 1 ? 'disabled' : ''} class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200/70 disabled:opacity-30">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <button type="button" onclick="duplicateLayer('${layer.uid}')" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            </button>
+                            <button type="button" onclick="removeLayer('${layer.uid}')" ${layers.length <= 1 ? 'disabled' : ''} class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 disabled:opacity-30">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleMaterialChange(uid, newMaterialId) {
+            const layer = layers.find(l => l.uid === uid);
+            if (!layer) return;
+            const mat = getMaterialById(newMaterialId);
+            layer.materialId = newMaterialId;
+            layer.density = mat.density;
+            layer.customCode = newMaterialId !== 'CUSTOM' ? mat.code : (layer.customCode || 'CUSTOM');
+            renderLayersTable();
+            recalculateAll();
+        }
+
+        function handleCustomCodeChange(uid, value) {
+            const layer = layers.find(l => l.uid === uid);
+            if (!layer) return;
+            layer.customCode = value.trim() || 'TÙY CHỈNH';
+            recalculateAll();
+        }
+
+        function handleLayerValueInput(uid, field, rawValue) {
+            const layer = layers.find(l => l.uid === uid);
+            if (!layer) return;
+            const numericVal = parseFloat(rawValue);
+            layer[field] = Number.isNaN(numericVal) ? 0 : Math.max(0, numericVal);
+
+            if (field === 'density') {
+                const mat = getMaterialById(layer.materialId);
+                const isCustomModifiedDensity = Math.abs((parseFloat(layer.density) || 0) - mat.density) > 0.00001;
+                const densityGroupEl = document.getElementById(`density-group-${uid}`);
+                const densityInputEl = document.getElementById(`density-input-${uid}`);
+                const hintEl = document.getElementById(`density-hint-${uid}`);
+
+                if (densityGroupEl && densityInputEl) {
+                    densityGroupEl.className = `flex items-stretch rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition ${isCustomModifiedDensity ? 'bg-amber-50/70 border-amber-400' : 'bg-white border-slate-300'}`;
+                    densityInputEl.className = `w-full min-w-[72px] px-2.5 py-2 text-right font-mono text-sm font-bold ${isCustomModifiedDensity ? 'text-amber-800' : 'text-slate-900'} bg-transparent outline-none`;
+                }
+                if (hintEl) {
+                    hintEl.innerHTML = isCustomModifiedDensity
+                        ? `<button type="button" onclick="resetLayerDensity('${layer.uid}')" class="text-amber-600 hover:text-amber-800 underline font-medium cursor-pointer">Chuẩn: ${formatDensityDisplay(mat.density)} ↺</button>`
+                        : `<span class="text-slate-400 font-mono">Chuẩn: ${formatDensityDisplay(mat.density)}</span>`;
+                }
+            }
+            recalculateAll();
+        }
+
+        function resetLayerDensity(uid) {
+            const layer = layers.find(l => l.uid === uid);
+            if (!layer) return;
+            const mat = getMaterialById(layer.materialId);
+            layer.density = mat.density;
+            renderLayersTable();
+            recalculateAll();
+            showToast(`Đã khôi phục tỷ trọng chuẩn ${formatDensityDisplay(mat.density)} g/cm³`);
+        }
+
+        function addLayer() {
+            const defaultMat = getMaterialById('LLDPE');
+            layers.push({
+                uid: `layer-${nextUidCounter++}`,
+                materialId: defaultMat.id,
+                customCode: defaultMat.code,
+                thickness: defaultMat.defaultThickness,
+                density: defaultMat.density
+            });
+            renderLayersTable();
+            recalculateAll();
+        }
+
+        function addSpecificMaterialLayer(matId) {
+            const mat = getMaterialById(matId);
+            layers.push({
+                uid: `layer-${nextUidCounter++}`,
+                materialId: mat.id,
+                customCode: mat.code,
+                thickness: mat.defaultThickness,
+                density: mat.density
+            });
+            renderLayersTable();
+            recalculateAll();
+        }
+
+        function duplicateLayer(uid) {
+            const idx = layers.findIndex(l => l.uid === uid);
+            if (idx === -1) return;
+            const source = layers[idx];
+            layers.splice(idx + 1, 0, {
+                uid: `layer-${nextUidCounter++}`,
+                materialId: source.materialId,
+                customCode: source.customCode,
+                thickness: source.thickness,
+                density: source.density
+            });
+            renderLayersTable();
+            recalculateAll();
+            showToast('Đã nhân bản lớp màng!');
+        }
+
+        function removeLayer(uid) {
+            if (layers.length <= 1) return;
+            layers = layers.filter(l => l.uid !== uid);
+            renderLayersTable();
+            recalculateAll();
+        }
+
+        function moveLayer(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= layers.length) return;
+            const temp = layers[index];
+            layers[index] = layers[targetIndex];
+            layers[targetIndex] = temp;
+            renderLayersTable();
+            recalculateAll();
+        }
+
+        /* Two-Way Mode Switching: LENGTH_TO_OD vs OD_TO_LENGTH */
+        function setRollCalcMode(mode) {
+            rollCalcMode = mode;
+            const btnLen = document.getElementById('modeBtnLengthToOd');
+            const btnOd = document.getElementById('modeBtnOdToLength');
+            const lenCard = document.getElementById('lengthCardContainer');
+            const odCard = document.getElementById('odCardContainer');
+            const lenBadge = document.getElementById('lengthRoleBadge');
+            const odBadge = document.getElementById('odRoleBadge');
+
+            if (mode === 'LENGTH_TO_OD') {
+                btnLen.className = 'flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition bg-blue-600 text-white shadow-xs';
+                btnOd.className = 'flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition text-slate-700 hover:text-slate-900';
+
+                lenCard.className = 'p-4 rounded-xl border-2 border-blue-500 bg-blue-50/40 transition flex flex-col justify-between gap-2.5';
+                odCard.className = 'p-4 rounded-xl border border-amber-300 bg-amber-50/40 transition flex flex-col justify-between gap-2.5';
+
+                lenBadge.textContent = 'Đang nhập Dài (m)';
+                lenBadge.className = 'text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white';
+
+                odBadge.textContent = 'Tự động tính từ Dài (m)';
+                odBadge.className = 'text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300';
+            } else {
+                btnOd.className = 'flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition bg-amber-500 text-slate-950 font-bold shadow-xs';
+                btnLen.className = 'flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition text-slate-700 hover:text-slate-900';
+
+                odCard.className = 'p-4 rounded-xl border-2 border-amber-500 bg-amber-50/60 transition flex flex-col justify-between gap-2.5';
+                lenCard.className = 'p-4 rounded-xl border border-blue-200 bg-blue-50/20 transition flex flex-col justify-between gap-2.5';
+
+                odBadge.textContent = 'Đang nhập OD (mm)';
+                odBadge.className = 'text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500 text-slate-950';
+
+                lenBadge.textContent = 'Tự động tính từ OD (mm)';
+                lenBadge.className = 'text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-300';
+            }
+            recalculateAll();
+        }
+
+        function handleRollLengthDirectInput() {
+            if (rollCalcMode !== 'LENGTH_TO_OD') {
+                setRollCalcMode('LENGTH_TO_OD');
+            } else {
+                recalculateAll();
+            }
+        }
+
+        function handleRollOdDirectInput() {
+            if (rollCalcMode !== 'OD_TO_LENGTH') {
+                setRollCalcMode('OD_TO_LENGTH');
+            } else {
+                recalculateAll();
+            }
+        }
+
+        function setQuickRollLength(val) {
+            document.getElementById('rollLengthInput').value = val;
+            setRollCalcMode('LENGTH_TO_OD');
+        }
+
+        function setQuickRollOd(val) {
+            document.getElementById('rollOdMmInput').value = val;
+            setRollCalcMode('OD_TO_LENGTH');
+        }
+
+        function setQuickRollWidth(val) {
+            document.getElementById('rollWidthInput').value = val;
+            recalculateAll();
+        }
+
+        function setQuickRollQty(val) {
+            document.getElementById('rollQtyInput').value = val;
+            recalculateAll();
+        }
+
+        function setQuickCoreInch(inchVal) {
+            document.getElementById('coreDiameterInchInput').value = inchVal;
+            updateCoreQuickButtons(inchVal);
+            recalculateAll();
+        }
+
+        function handleCoreDiameterInput(rawValue) {
+            updateCoreQuickButtons(parseFloat(rawValue));
+            recalculateAll();
+        }
+
+        function updateCoreQuickButtons(activeInch) {
+            [3, 5, 6].forEach(size => {
+                const btn = document.getElementById(`coreBtn${size}`);
+                if (!btn) return;
+                if (Math.abs((activeInch || 0) - size) < 0.001) {
+                    btn.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-indigo-600 text-white border-indigo-600';
+                } else {
+                    btn.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition bg-white text-slate-700 border-slate-300 hover:bg-indigo-50';
+                }
+            });
+        }
+
+        function handleCustomDiameterThicknessInput() {
+            isDiameterThicknessOverridden = true;
+            updateThicknessSyncUI();
+            recalculateAll();
+        }
+
+        function resyncDiameterThickness() {
+            isDiameterThicknessOverridden = false;
+            updateThicknessSyncUI();
+            recalculateAll();
+            showToast('Đã đồng bộ tổng độ dày (µm) từ Bảng 1!');
+        }
+
+        function updateThicknessSyncUI() {
+            const badge = document.getElementById('thicknessSyncBadge');
+            const resyncBtn = document.getElementById('resyncThicknessBtn');
+            const autoNote = document.getElementById('thicknessAutoNote');
+
+            if (isDiameterThicknessOverridden) {
+                badge.textContent = 'Đang nhập thủ công';
+                badge.className = 'text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300';
+                resyncBtn.classList.remove('hidden');
+                autoNote.classList.add('hidden');
+            } else {
+                badge.textContent = 'Tự động theo Bảng 1';
+                badge.className = 'text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200';
+                resyncBtn.classList.add('hidden');
+                autoNote.classList.remove('hidden');
+            }
+        }
+
+        function recalculateAll() {
+            let totalThicknessMicron = 0;
+            let totalLayersGsm = 0;
+            const gsmFormulaParts = [];
+
+            const computedLayers = layers.map((layer, index) => {
+                const mat = getMaterialById(layer.materialId);
+                const t = Math.max(0, parseFloat(layer.thickness) || 0);
+                const d = Math.max(0, parseFloat(layer.density) || 0);
+                const gsm = t * d;
+
+                totalThicknessMicron += t;
+                totalLayersGsm += gsm;
+
+                const codeLabel = layer.materialId === 'CUSTOM' ? (layer.customCode || 'CUSTOM') : mat.code;
+                gsmFormulaParts.push(`${formatNumber(gsm, 2)}`);
+
+                return { ...layer, mat, codeLabel, thicknessVal: t, densityVal: d, gsmVal: gsm, index };
+            });
+
+            const extraGsm = Math.max(0, parseFloat(document.getElementById('extraGsmInput').value) || 0);
+            const totalGsm = totalLayersGsm + extraGsm;
+            if (extraGsm > 0) gsmFormulaParts.push(`${formatNumber(extraGsm, 2)} (keo/mực)`);
+
+            computedLayers.forEach(item => {
+                const gsmEl = document.getElementById(`layer-gsm-${item.uid}`);
+                const pctEl = document.getElementById(`layer-pct-${item.uid}`);
+                const barEl = document.getElementById(`layer-bar-${item.uid}`);
+                const pct = totalGsm > 0 ? (item.gsmVal / totalGsm) * 100 : 0;
+
+                if (gsmEl) gsmEl.textContent = formatNumber(item.gsmVal, 2);
+                if (pctEl) pctEl.textContent = `${formatNumber(pct, 1)}%`;
+                if (barEl) barEl.style.width = `${Math.min(100, pct)}%`;
+            });
+
+            // Sync or read Thickness (µm) for Roll OD / Length
+            const diameterThicknessInputEl = document.getElementById('diameterThicknessInput');
+            document.getElementById('layerTableThicknessRef').textContent = formatNumber(totalThicknessMicron, 1);
+
+            if (!isDiameterThicknessOverridden && diameterThicknessInputEl) {
+                diameterThicknessInputEl.value = Number.isInteger(totalThicknessMicron)
+                    ? totalThicknessMicron
+                    : parseFloat(totalThicknessMicron.toFixed(2));
+            }
+            const usedThicknessMicron = Math.max(0, parseFloat(diameterThicknessInputEl.value) || 0);
+
+            // Core Diameter
+            const coreInch = Math.max(0, parseFloat(document.getElementById('coreDiameterInchInput').value) || 0);
+            const coreMm = coreInch * 25.4;
+            document.getElementById('warningCoreMmText').textContent = `${formatNumber(coreMm, 1)} mm`;
+
+            // Two-Way Calculation: Roll Length (m) <---> Roll Outer Diameter (OD - mm)
+            const lengthInputEl = document.getElementById('rollLengthInput');
+            const odInputEl = document.getElementById('rollOdMmInput');
+            const warningBanner = document.getElementById('odWarningBanner');
+
+            let rollLengthM = 0;
+            let rollOdMm = coreMm;
+
+            if (rollCalcMode === 'LENGTH_TO_OD') {
+                rollLengthM = Math.max(0, parseFloat(lengthInputEl.value) || 0);
+                rollOdMm = Math.sqrt(Math.pow(coreMm, 2) + (4 * rollLengthM * usedThicknessMicron) / Math.PI);
+                if (odInputEl && document.activeElement !== odInputEl) {
+                    odInputEl.value = parseFloat(rollOdMm.toFixed(1));
+                }
+                warningBanner.classList.add('hidden');
+                warningBanner.classList.remove('flex');
+            } else {
+                const inputOdMm = Math.max(0, parseFloat(odInputEl.value) || 0);
+                if (inputOdMm <= coreMm || usedThicknessMicron <= 0) {
+                    rollOdMm = inputOdMm;
+                    rollLengthM = 0;
+                    if (inputOdMm <= coreMm) {
+                        warningBanner.classList.remove('hidden');
+                        warningBanner.classList.add('flex');
+                    }
+                } else {
+                    rollOdMm = inputOdMm;
+                    rollLengthM = (Math.PI * (Math.pow(rollOdMm, 2) - Math.pow(coreMm, 2))) / (4 * usedThicknessMicron);
+                    warningBanner.classList.add('hidden');
+                    warningBanner.classList.remove('flex');
+                }
+                if (lengthInputEl && document.activeElement !== lengthInputEl) {
+                    lengthInputEl.value = parseFloat(rollLengthM.toFixed(1));
+                }
+            }
+
+            const rollOdCm = rollOdMm / 10;
+            const rollOdInch = rollOdMm / 25.4;
+            const filmWallThicknessMm = Math.max(0, (rollOdMm - coreMm) / 2);
+            const estimatedTurns = usedThicknessMicron > 0 ? Math.round((filmWallThicknessMm * 1000) / usedThicknessMicron) : 0;
+
+            // Width & Quantity
+            const rollWidthMm = Math.max(0, parseFloat(document.getElementById('rollWidthInput').value) || 0);
+            const rollQty = Math.max(1, parseInt(document.getElementById('rollQtyInput').value, 10) || 1);
+            const rollWidthM = rollWidthMm / 1000;
+            const singleRollAreaM2 = rollLengthM * rollWidthM;
+
+            // Weights & Yields
+            const singleRollWeightKg = (totalGsm * rollLengthM * rollWidthMm) / 1000000;
+            const singleRollWeightGram = singleRollWeightKg * 1000;
+            const totalAllRollsWeightKg = singleRollWeightKg * rollQty;
+            const totalAllRollsAreaM2 = singleRollAreaM2 * rollQty;
+
+            const yieldM2PerKg = totalGsm > 0 ? (1000 / totalGsm) : 0;
+            const yieldMetersPerKg = (totalGsm > 0 && rollWidthMm > 0) ? (1000000 / (totalGsm * rollWidthMm)) : 0;
+
+            // Update DOM Elements
+            const activeLayerCount = computedLayers.filter(l => l.thicknessVal > 0).length;
+            const structureCodeStr = computedLayers
+                .filter(l => l.thicknessVal > 0)
+                .map(l => `${l.codeLabel} ${l.thicknessVal}`)
+                .join(' / ');
+            document.getElementById('structureBadgeText').textContent = structureCodeStr || 'Chưa nhập độ dày';
+
+            document.getElementById('summaryLayerCount').textContent = `${activeLayerCount} lớp`;
+            document.getElementById('summaryTotalThickness').textContent = formatNumber(totalThicknessMicron, 1);
+            document.getElementById('summaryTotalThicknessMm').textContent = `(${formatNumber(totalThicknessMicron / 1000, 3)} mm)`;
+            document.getElementById('summaryTotalGsm').textContent = formatNumber(totalGsm, 2);
+
+            document.getElementById('widthInMetersText').textContent = `${formatNumber(rollWidthM, 3)} m`;
+            document.getElementById('totalLengthAllRollsText').textContent = `${formatNumber(rollLengthM * rollQty, 1)} m`;
+
+            const coreLabelFormatted = Number.isInteger(coreInch) ? coreInch : formatNumber(coreInch, 2);
+            document.getElementById('coreDiameterMmText').textContent = `${formatNumber(coreMm, 1)} mm`;
+            document.getElementById('diameterThicknessMmText').textContent = `${formatNumber(usedThicknessMicron / 1000, 3)} mm`;
+            document.getElementById('rollCoreBadge').textContent = `Lõi ${coreLabelFormatted}" (${formatNumber(coreMm, 1)} mm)`;
+            document.getElementById('sectionRollOdMm').textContent = formatNumber(rollOdMm, 1);
+            document.getElementById('sectionRollOdCm').textContent = `${formatNumber(rollOdCm, 2)} cm`;
+            document.getElementById('sectionRollOdInch').textContent = `${formatNumber(rollOdInch, 2)}"`;
+            document.getElementById('sectionRollLengthM').textContent = formatNumber(rollLengthM, 1);
+            document.getElementById('sectionUsedThickness').textContent = `${formatNumber(usedThicknessMicron, 1)} µm`;
+            document.getElementById('sectionCoreMm').textContent = `${formatNumber(coreMm, 1)} mm`;
+            document.getElementById('sectionFilmWallMm').textContent = `${formatNumber(filmWallThicknessMm, 1)} mm`;
+            document.getElementById('sectionRollTurns').textContent = `${formatNumber(estimatedTurns, 0)} vòng`;
+
+            // Right Dashboard Cards
+            document.getElementById('cardTotalGsm').textContent = formatNumber(totalGsm, 2);
+            document.getElementById('cardTotalThickness').textContent = `${formatNumber(totalThicknessMicron, 1)} µm`;
+            document.getElementById('cardSingleRollWeightKg').textContent = formatNumber(singleRollWeightKg, 2);
+            document.getElementById('cardSingleRollWeightGram').textContent = `${formatNumber(singleRollWeightGram, 0)} g`;
+
+            document.getElementById('cardCoreLabel').textContent = `Lõi ${coreLabelFormatted}" (${formatNumber(coreMm, 1)}mm)`;
+            document.getElementById('cardRollOdMm').textContent = `${formatNumber(rollOdMm, 1)} mm`;
+            document.getElementById('cardRollOdCm').textContent = `${formatNumber(rollOdCm, 2)} cm`;
+            document.getElementById('cardRollLengthM').textContent = `${formatNumber(rollLengthM, 1)} m`;
+            document.getElementById('cardWallMmDetail').textContent = `Thịt: ${formatNumber(filmWallThicknessMm, 1)} mm`;
+
+            document.getElementById('cardRollQtyLabel').textContent = rollQty;
+            document.getElementById('cardTotalAreaAllRolls').textContent = `Tổng diện tích: ${formatNumber(totalAllRollsAreaM2, 1)} m²`;
+            document.getElementById('cardTotalRollsWeightKg').textContent = formatNumber(totalAllRollsWeightKg, 2);
+
+            document.getElementById('cardRollAreaM2').textContent = formatNumber(singleRollAreaM2, 1);
+            document.getElementById('cardYieldM2PerKg').textContent = formatNumber(yieldM2PerKg, 2);
+            document.getElementById('yieldWidthLabel').textContent = rollWidthMm;
+            document.getElementById('cardYieldMetersPerKg').textContent = formatNumber(yieldMetersPerKg, 2);
+
+            // Formulas
+            document.getElementById('formulaStepGsmBreakdown').textContent =
+                `${gsmFormulaParts.join(' + ')} = ${formatNumber(totalGsm, 2)} g/m²`;
+
+            document.getElementById('formulaStepWeightMath').textContent =
+                `= (${formatNumber(totalGsm, 2)} × ${formatNumber(rollLengthM, 1)} × ${rollWidthMm}) / 1,000,000 = ${formatNumber(singleRollWeightKg, 2)} kg`;
+
+            if (rollCalcMode === 'LENGTH_TO_OD') {
+                document.getElementById('formulaStepDiameterMath').textContent =
+                    `OD = √[ ${formatNumber(coreMm, 1)}² + (4 × ${formatNumber(rollLengthM, 1)} × ${formatNumber(usedThicknessMicron, 1)}) / π ] = ${formatNumber(rollOdMm, 1)} mm`;
+            } else {
+                document.getElementById('formulaStepDiameterMath').textContent =
+                    `L = [ π × (${formatNumber(rollOdMm, 1)}² - ${formatNumber(coreMm, 1)}²) ] / (4 × ${formatNumber(usedThicknessMicron, 1)}) = ${formatNumber(rollLengthM, 1)} m`;
+            }
+
+            renderRollSvgDiagram(coreMm, rollOdMm, coreLabelFormatted);
+            renderCrossSectionDiagram(computedLayers, totalThicknessMicron, totalGsm, extraGsm);
+        }
+
+        function renderRollSvgDiagram(coreMm, rollOdMm, coreLabelInch) {
+            const container = document.getElementById('rollSvgContainer');
+            if (!container) return;
+
+            const outerR = 72;
+            const minCoreR = 14;
+            const safeOd = Math.max(rollOdMm, coreMm, 1);
+            const coreR = Math.max(minCoreR, Math.min(outerR - 6, Math.round(outerR * (coreMm / safeOd))));
+
+            const windCircles = [];
+            for (let i = 1; i < 4; i++) {
+                const r = coreR + ((outerR - coreR) * (i / 4));
+                windCircles.push(`<circle cx="88" cy="88" r="${r.toFixed(1)}" fill="none" stroke="rgba(148, 163, 184, 0.25)" stroke-width="1" stroke-dasharray="4 3" />`);
+            }
+
+            container.innerHTML = `
+                <svg viewBox="0 0 176 176" class="w-full h-full">
+                    <defs>
+                        <radialGradient id="rollFilmGrad" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#1e293b" />
+                            <stop offset="55%" stop-color="#3b82f6" stop-opacity="0.45" />
+                            <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.75" />
+                        </radialGradient>
+                    </defs>
+                    <circle cx="88" cy="88" r="${outerR}" fill="url(#rollFilmGrad)" stroke="#fbbf24" stroke-width="2.5" />
+                    ${windCircles.join('')}
+                    <circle cx="88" cy="88" r="${coreR}" fill="#78350f" stroke="#f59e0b" stroke-width="3" />
+                    <circle cx="88" cy="88" r="${Math.max(5, coreR - 6)}" fill="#0f172a" />
+                    <line x1="${88 - outerR}" y1="88" x2="${88 + outerR}" y2="88" stroke="#fde047" stroke-width="1.5" stroke-dasharray="3 2" />
+                    <rect x="42" y="14" width="92" height="18" rx="4" fill="rgba(15, 23, 42, 0.88)" stroke="rgba(251, 191, 36, 0.5)" stroke-width="1" />
+                    <text x="88" y="26" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono, monospace" font-size="10" font-weight="bold">
+                        OD: ${formatNumber(rollOdMm, 0)}mm
+                    </text>
+                    <text x="88" y="91" text-anchor="middle" fill="#fef3c7" font-family="JetBrains Mono, monospace" font-size="9" font-weight="bold">
+                        ${coreLabelInch}"
+                    </text>
+                </svg>
+            `;
+        }
+
+        function renderCrossSectionDiagram(computedLayers, totalThicknessMicron, totalGsm, extraGsm) {
+            const container = document.getElementById('crossSectionContainer');
+            document.getElementById('diagramTotalMicron').textContent = `${formatNumber(totalThicknessMicron, 1)} µm`;
+            document.getElementById('diagramTotalGsm').textContent = `${formatNumber(totalGsm, 2)} g/m²`;
+
+            const htmlParts = computedLayers.map((item, idx) => {
+                const share = totalThicknessMicron > 0 ? (item.thicknessVal / totalThicknessMicron) : (1 / computedLayers.length);
+                const heightPx = Math.max(38, Math.min(90, Math.round(share * 180)));
+                const metallicClass = item.mat.metallic ? 'layer-pattern-metal' : '';
+
+                return `
+                    <div class="w-full px-3 sm:px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 border-b last:border-b-0 border-black/10 ${metallicClass}"
+                         style="min-height: ${heightPx}px; background-color: ${item.mat.color}; color: ${item.mat.textColor};">
+                        <div class="flex items-center gap-2">
+                            <span class="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded bg-black/25 text-white">Lớp ${idx + 1}</span>
+                            <span class="font-bold text-xs sm:text-sm">${item.codeLabel}</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+                            <span>Dày: <strong>${item.thicknessVal} µm</strong></span>
+                            <span>| Tỷ trọng: <strong>${formatDensityDisplay(item.densityVal)}</strong></span>
+                            <span class="px-2 py-0.5 rounded bg-black/25 text-white font-bold">${formatNumber(item.gsmVal, 2)} g/m²</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (extraGsm > 0) {
+                htmlParts.push(`
+                    <div class="w-full px-4 py-1.5 bg-amber-300 text-amber-950 flex items-center justify-between text-xs font-mono border-t border-amber-400">
+                        <span class="font-bold">+ Keo khô / Mực in cộng thêm</span>
+                        <span class="font-bold">+${formatNumber(extraGsm, 2)} g/m²</span>
+                    </div>
+                `);
+            }
+            container.innerHTML = htmlParts.join('');
+        }
+
+        function loadPreset(presetKey) {
+            const presets = {
+                'IMAGE_SAMPLE': [
+                    { materialId: 'ALU', thickness: 9, density: 2.71 },
+                    { materialId: 'WHITE_LLDPE', thickness: 191, density: 0.92 }
+                ],
+                'PET_ALU_LLDPE': [
+                    { materialId: 'PET', thickness: 12, density: 1.40 },
+                    { materialId: 'ALU', thickness: 7, density: 2.71 },
+                    { materialId: 'LLDPE', thickness: 70, density: 0.9198 }
+                ],
+                'BOPP_MPET_CPP': [
+                    { materialId: 'BOPP', thickness: 20, density: 0.91 },
+                    { materialId: 'MPET', thickness: 12, density: 1.40 },
+                    { materialId: 'CPP', thickness: 40, density: 0.91 }
+                ],
+                'MATOPP_MPET_PE': [
+                    { materialId: 'MATT_OPP', thickness: 20, density: 0.91 },
+                    { materialId: 'MPET', thickness: 12, density: 1.40 },
+                    { materialId: 'PE', thickness: 70, density: 0.92 }
+                ],
+                'PET_NYLON_ALU_CPP': [
+                    { materialId: 'PET', thickness: 12, density: 1.40 },
+                    { materialId: 'NYLON', thickness: 15, density: 1.16 },
+                    { materialId: 'ALU', thickness: 9, density: 2.71 },
+                    { materialId: 'CPP', thickness: 70, density: 0.91 }
+                ]
+            };
+
+            const selected = presets[presetKey];
+            if (!selected) return;
+
+            layers = selected.map(item => {
+                const mat = getMaterialById(item.materialId);
+                return {
+                    uid: `layer-${nextUidCounter++}`,
+                    materialId: item.materialId,
+                    customCode: mat.code,
+                    thickness: item.thickness,
+                    density: item.density
+                };
+            });
+
+            renderLayersTable();
+            recalculateAll();
+            showToast('Đã nạp cấu trúc màng mẫu!');
+        }
+
+        function populateReferenceModal() {
+            const tbody = document.getElementById('referenceModalBody');
+            tbody.innerHTML = MATERIAL_LIBRARY.filter(m => m.id !== 'CUSTOM').map((mat, index) => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-3 text-center font-mono text-slate-400">${index + 1}</td>
+                    <td class="py-2 px-3 font-medium text-slate-900">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full mr-1.5" style="background-color: ${mat.color};"></span>
+                        ${mat.name}
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono font-bold text-blue-700">${formatDensityDisplay(mat.density)}</td>
+                    <td class="py-2 px-3 text-right font-mono text-slate-500">${mat.commonMicrons} µm</td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleReferenceModal(show) {
+            const modal = document.getElementById('referenceModal');
+            modal.classList.toggle('hidden', !show);
+            modal.classList.toggle('flex', show);
+        }
+
+        function copySummaryReport() {
+            const structure = document.getElementById('structureBadgeText').textContent;
+            const totalThickness = document.getElementById('summaryTotalThickness').textContent;
+            const totalGsm = document.getElementById('summaryTotalGsm').textContent;
+            const widthMm = document.getElementById('rollWidthInput').value;
+            const lengthM = document.getElementById('sectionRollLengthM').textContent;
+            const qty = document.getElementById('rollQtyInput').value;
+            const coreInch = document.getElementById('coreDiameterInchInput').value;
+            const coreMm = document.getElementById('sectionCoreMm').textContent;
+            const rollOdMm = document.getElementById('sectionRollOdMm').textContent;
+            const rollOdCm = document.getElementById('sectionRollOdCm').textContent;
+            const singleWeightKg = document.getElementById('cardSingleRollWeightKg').textContent;
+            const totalWeightKg = document.getElementById('cardTotalRollsWeightKg').textContent;
+
+            const reportText = [
+                `=== BÁO CÁO TÍNH CUỘN MÀNG GHÉP ĐA LỚP ===`,
+                `- Cấu trúc: ${structure}`,
+                `- Tổng độ dày: ${totalThickness} µm`,
+                `- Tổng định lượng (Total GSM): ${totalGsm} g/m²`,
+                `- Khổ rộng cuộn: ${widthMm} mm`,
+                `- Chiều dài cuộn (L): ${lengthM} m`,
+                `- Ống lõi (Core): ${coreInch} inch (${coreMm})`,
+                `- Đường kính ngoài cuộn (OD): ${rollOdMm} mm (${rollOdCm})`,
+                `- Khối lượng 1 cuộn: ${singleWeightKg} kg`,
+                `- Tổng khối lượng (${qty} cuộn): ${totalWeightKg} kg`
+            ].join('\n');
+
+            const textarea = document.createElement('textarea');
+            textarea.value = reportText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('Đã sao chép báo cáo vào bộ nhớ tạm!');
+        }
+
+        function exportCSV() {
+            const rows = [
+                ['BẢNG TÍNH GSM, KHỐI LƯỢNG, ĐƯỜNG KÍNH & CHIỀU DÀI CUỘN MÀNG'],
+                ['Cấu trúc', document.getElementById('structureBadgeText').textContent],
+                [],
+                ['Thứ tự lớp', 'Tên vật liệu', 'Tỷ trọng (g/cm³)', 'Độ dày (µm)', 'GSM lớp (g/m²)']
+            ];
+
+            layers.forEach((l, idx) => {
+                const mat = getMaterialById(l.materialId);
+                const code = l.materialId === 'CUSTOM' ? l.customCode : mat.code;
+                const gsm = (parseFloat(l.thickness) || 0) * (parseFloat(l.density) || 0);
+                rows.push([`Lớp ${idx + 1}`, code, formatDensityDisplay(l.density), l.thickness, gsm.toFixed(2)]);
+            });
+
+            rows.push([]);
+            rows.push(['Tổng độ dày (µm)', document.getElementById('summaryTotalThickness').textContent]);
+            rows.push(['Tổng GSM (g/m²)', document.getElementById('summaryTotalGsm').textContent]);
+            rows.push(['Khổ rộng cuộn (mm)', document.getElementById('rollWidthInput').value]);
+            rows.push(['Chiều dài cuộn (m)', document.getElementById('sectionRollLengthM').textContent]);
+            rows.push(['Đường kính lõi (inch)', document.getElementById('coreDiameterInchInput').value]);
+            rows.push(['Đường kính ngoài cuộn OD (mm)', document.getElementById('sectionRollOdMm').textContent]);
+            rows.push(['Khối lượng 1 cuộn (kg)', document.getElementById('cardSingleRollWeightKg').textContent]);
+            rows.push(['Tổng khối lượng các cuộn (kg)', document.getElementById('cardTotalRollsWeightKg').textContent]);
+
+            const csvContent = '\uFEFF' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `tinh-cuon-mang-ghep-${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('Đã xuất file CSV thành công!');
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg border border-slate-700 flex items-center gap-2 transition-all duration-300 pointer-events-auto';
+            toast.innerHTML = `<span class="text-emerald-400 font-bold">✓</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2400);
+        }
+
+        window.onload = function () {
+            populateReferenceModal();
+            renderLayersTable();
+            recalculateAll();
+        };
+    </script>
+</body>
+</html>
